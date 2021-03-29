@@ -1,5 +1,6 @@
 require 'colorize'
-require 'rss'
+require 'feedjira'
+require 'open-uri'
 require 'json'
 
 class PleRSSoma
@@ -35,55 +36,55 @@ class PleRSSoma
     begin
       puts "Attempting to read #{feeds[i]['url'].cyan}..."
 
-      rss = RSS::Parser.parse(URI.open(feeds[i]['url']).read)
-      puts "\tIdentified feed title as #{rss.channel.title.cyan}"
+      feed = Feedjira.parse(URI.open(feeds[i]['url']).read)
+      puts "\tIdentified feed title as #{feed.title.cyan}"
 
-      feeds[i]['last_time'].nil? ? new_feed(i, rss) : extant_feed(i, rss)
+      feeds[i]['last_time'].nil? ? new_feed(i, feed) : extant_feed(i, feed)
 
-      @pub_times += rss.items.collect { |item| item.pubDate.to_i }
+      @pub_times += feed.entries.collect { |entry| entry.published.to_i }
     rescue => e
-      puts "Failed to acquire #{feeds[i]['url'].cyan} because #{e.message.red}"
+      puts "Failed to acquire #{feeds[i]['url'].cyan} with error type #{e.class.red} because #{e.message.red}"
     end
   end
 
-  def new_feed(i, rss)
+  def new_feed(i, feed)
     puts "\tThis feed has never been uploaded from. Establishing a baseline"
 
-    item = rss.items.max { |a,b| a.pubDate <=> b.pubDate }
+    entry = feed.entries.max { |a,b| a.published <=> b.published }
 
-    puts "\tThe most recent item is #{item.title.cyan}, published at #{item.pubDate.yellow}."
+    puts "\tThe most recent entry is #{entry.title.cyan}, published at #{entry.published.yellow}."
 
-    feeds[i]['last_time'] = item.pubDate.to_i
+    feeds[i]['last_time'] = entry.published.to_i
   end
 
-  def extant_feed(i, rss)
-    new_items = rss.items.select { |item| item.pubDate.to_i > feeds[i]['last_time'] }
+  def extant_feed(i, feed)
+    new_entries = feed.entries.select { |entry| entry.published.to_i > feeds[i]['last_time'] }
 
-    if new_items.length == 0
-      puts "\tNo new content for #{rss.channel.title.cyan}"
+    if new_entries.length == 0
+      puts "\tNo new content for #{feed.title.cyan}"
       return
     end
 
-    new_items.each do |item|
-      new_item(i, rss, item)
+    new_entries.each do |entry|
+      new_item(i, feed, entry)
     end
 
-    feeds[i]['last_time'] = new_items.max { |a,b| a.pubDate <=> b.pubDate }.pubDate.to_i
+    feeds[i]['last_time'] = new_entries.max { |a,b| a.published <=> b.published }.published.to_i
   end
 
-  def new_item(i, rss, item)
+  def new_item(i, feed, entry)
     uri = URI.parse("https://#{feeds[i]['instance']}/api/v1/statuses")
     header = {
       'Authorization'=> "Bearer #{feeds[i]['bearer_token']}",
       'Content-Type' => 'application/json'
     }
 
-    status = feeds[i]['status'].gsub("$TITLE", item.title).gsub("$URL", item.link).gsub("$PUBDATE", item.pubDate.to_s)
+    status = feeds[i]['status'].gsub("$TITLE", entry.title).gsub("$URL", entry.url).gsub("$published", entry.published.to_s).gsub("$DESC", entry.summary)
 
     req = Net::HTTP::Post.new(uri.request_uri, header)
     req.body = {
       'status'       => status,
-      'source'       => 'plerssoma',
+      'source'       => 'plefeedoma',
       'visibility'   => feeds[i]['visibility'] || 'public',
       'content_type' => 'text/html'
     }.to_json
@@ -93,7 +94,7 @@ class PleRSSoma
 
     res = http.request(req)
 
-    puts "\tPublished new article #{item.title.green}"
+    puts "\tPublished new article #{entry.title.green}"
   end
 end
 
