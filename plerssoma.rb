@@ -79,26 +79,16 @@ class PleRSSoma
   end
 
   def new_item(i, feed, entry)
-    uri = URI.parse("https://#{feeds[i]['instance']}/api/v1/statuses")
-    header = {
-      'Authorization'=> "Bearer #{feeds[i]['bearer_token']}",
-      'Content-Type' => 'application/json'
-    }
+    syn = Syndesmos.new(bearer_token: feeds[i]['bearer_token'], instance: feeds[i]['instance'])
 
     status = feeds[i]['status'].gsub("$TITLE", entry.title.to_s).gsub("$URL", entry.url.to_s).gsub("$PUBLISHED", entry.published.to_s).gsub("$DESC", entry.summary.to_s)
 
-    req = Net::HTTP::Post.new(uri.request_uri, header)
-    req.body = {
+    syn.statuses({
       'status'       => status,
       'source'       => 'plefeedoma',
       'visibility'   => feeds[i]['visibility'] || 'public',
       'content_type' => 'text/html'
-    }.to_json
-
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-
-    res = http.request(req)
+    })
 
     puts "\tPublished new article #{entry.title.green}"
 
