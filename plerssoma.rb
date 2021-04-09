@@ -11,6 +11,7 @@ class PleRSSoma
   def initialize(fn)
     @fn = fn
     @feeds = JSON.parse(File.open(fn, "r").read)
+    @multiplier = 1.0
   end
 
   def start
@@ -27,8 +28,11 @@ class PleRSSoma
       distances = pub_times.each_with_index.collect { |time,idx| pub_times[idx+1].nil? ? Float::INFINITY : pub_times[idx+1] - pub_times[idx] }
       distances.reject! { |d| d <= 0 }
       wait_time = pub_times.length > 1 ? distances.min : 3600
+      wait_time *= multiplier
       puts "Waiting until #{Time.at(Time.now.to_i + wait_time).strftime("%I:%M %p").yellow} (#{wait_time.yellow}s)"
       sleep wait_time
+
+      @multiplier += 0.25
     end
   end
 
