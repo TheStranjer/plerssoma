@@ -85,7 +85,7 @@ class PleRSSoma
       'Content-Type' => 'application/json'
     }
 
-    status = feeds[i]['status'].gsub("$TITLE", entry.title).gsub("$URL", entry.url).gsub("$published", entry.published.to_s).gsub("$DESC", entry.summary)
+    status = feeds[i]['status'].gsub("$TITLE", entry.title.to_s).gsub("$URL", entry.url.to_s).gsub("$PUBLISHED", entry.published.to_s).gsub("$DESC", entry.summary.to_s)
 
     req = Net::HTTP::Post.new(uri.request_uri, header)
     req.body = {
