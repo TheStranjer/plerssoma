@@ -5,6 +5,13 @@ GIT
   specs:
     colorize (0.8.1)
 
+GIT
+  remote: https://github.com/TheStranjer/syndesmos/
+  revision: 5302387af5cd73c1dbc1c19ab8a16567fb57603c
+  branch: akro
+  specs:
+    syndesmos (0.1.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -26,6 +33,7 @@ PLATFORMS
 DEPENDENCIES
   colorize!
   feedjira
+  syndesmos!
 
 BUNDLED WITH
    2.2.3
