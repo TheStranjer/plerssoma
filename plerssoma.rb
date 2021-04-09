@@ -6,7 +6,7 @@ require 'syndesmos'
 require 'time'
 
 class PleRSSoma
-  attr_accessor :feeds, :fn, :pub_times
+  attr_accessor :feeds, :fn, :pub_times, :multiplier
 
   def initialize(fn)
     @fn = fn
