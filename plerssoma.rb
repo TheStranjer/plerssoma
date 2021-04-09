@@ -101,6 +101,8 @@ class PleRSSoma
     res = http.request(req)
 
     puts "\tPublished new article #{entry.title.green}"
+
+    @multiplier = 1
   end
 end
 
