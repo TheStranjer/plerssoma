@@ -179,10 +179,7 @@ module Feedjira
         end
 
         def self.able_to_parse?(json)
-          JSON.parse(json)
-          true
-        rescue JSON::ParserError => e
-          false
+          /api\.github\.com/.match(json) ? true : false
         end
       end
     end
