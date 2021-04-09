@@ -199,4 +199,3 @@ fn = ARGV.find { |x| /\.json$/i.match(x) } || "feeds.json"
 puts "Opening #{fn.cyan} as feeds file"
 
 PleRSSoma.new(fn).start
-sleep 3600
