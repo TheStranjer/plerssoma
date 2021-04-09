@@ -2,6 +2,8 @@ require 'colorize'
 require 'feedjira'
 require 'open-uri'
 require 'json'
+require 'syndesmos'
+require 'time'
 
 class PleRSSoma
   attr_accessor :feeds, :fn, :pub_times
