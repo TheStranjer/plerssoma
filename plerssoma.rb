@@ -106,6 +106,95 @@ class PleRSSoma
   end
 end
 
+module Feedjira
+  module Parser
+    module GitHub
+      class RepositoryEventEntry
+        include FeedEntryUtilities
+
+        attr_reader :json, :entry_id, :url, :external_url, :title, :content, :summary,
+                    :published, :updated, :image, :banner_image, :author, :categories,
+                    :title
+
+        def initialize(event, title)
+          @json = json
+          @title = "Repository: #{title}"
+          @published = Time.parse(event[:created_at])
+
+          send("initialize_#{event_type(event)}".to_sym, event)
+        end
+
+        private
+
+        def initialize_push_event(event)
+          @entry_id = "PUSH:#{event[:payload][:push_id]}"
+          content = event[:payload][:commits].collect { |c| { 
+            :url     => "https://github.com/#{title}/commit/#{c[:sha]}",
+            :author  => c[:author][:name],
+            :message => c[:message]
+          } }
+
+          @summary = "<div>The following commits were pushed:</div><ul>#{content.collect { |c| "<li><a href=\"#{c[:url]}\">#{c[:message]}</a> by #{c[:author]}</li>" }.join('')}</ul>"
+        end
+
+        def initialize_create_event(event)
+          @entry_id = "CREATE:#{event['']}"
+          @summary = "Created <a href=\"https://github.com/#{title}/\">#{title}</a>"
+        end
+
+        def event_type(event)
+          event[:type]
+            .gsub(/^([A-Z])/) { |l| l.downcase }
+            .gsub(/([^A-Z])([A-Z])/) { |c| "#{c[0]}_#{c[1].downcase}" }
+        end
+      end
+
+      class RepositoryEventPublisher
+        include SAXMachine
+        include FeedUtilities
+
+        element :title
+        element :link, :as => :url
+        element :description
+
+        elements :item, :as => :entries, :class => GitHub::RepositoryEventEntry
+
+        attr_accessor :feed_url
+
+        attr_reader :json, :version, :title, :url, :feed_url, :description, :entries
+
+        def initialize(json)
+          @json = json
+          @version = "1.0"
+          @title = json.first[:repo][:name]
+          @url = "https://github.com/#{title}"
+          @feed_url = json.first[:repo][:url]
+          @description = json.select { |el| el[:type] == "CreateEvent" }.sort { |el| Time.parse(el[:created_at]).to_i }.first[:description]
+
+          @entries = json.collect { |ev| GitHub::RepositoryEventEntry.new(ev, title) }
+        end
+
+        def self.parse(json)
+          new(JSON.parse(json, symbolize_names: true))
+        end
+
+        def self.able_to_parse?(json)
+          JSON.parse(json)
+          true
+        rescue JSON::ParserError => e
+          false
+        end
+      end
+    end
+  end
+end
+
+Feedjira.configure do |config|
+  config.parsers += [
+    Feedjira::Parser::GitHub::RepositoryEventPublisher
+  ]
+end
+
 fn = ARGV.find { |x| /\.json$/i.match(x) } || "feeds.json"
 puts "Opening #{fn.cyan} as feeds file"
 
