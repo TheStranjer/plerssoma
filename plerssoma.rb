@@ -103,10 +103,11 @@ module Feedjira
 
         attr_reader :json, :entry_id, :url, :external_url, :title, :content, :summary,
                     :published, :updated, :image, :banner_image, :author, :categories,
-                    :title
+                    :title, :repo_title
 
         def initialize(event, title)
           @json = json
+          @repo_title = title
           @title = "Repository: #{title}"
           @published = Time.parse(event[:created_at])
 
@@ -128,7 +129,7 @@ module Feedjira
 
         def initialize_create_event(event)
           @entry_id = "CREATE:#{event['']}"
-          @summary = "Created <a href=\"https://github.com/#{title}/\">#{title}</a>"
+          @summary = "Created <a href=\"https://github.com/#{repo_title}/\">#{title}</a>"
         end
 
         def event_type(event)
