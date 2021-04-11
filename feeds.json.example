@@ -1,0 +1,30 @@
+[
+  {
+    "url": "https://lukesmith.xyz/rss.xml",
+    "instance": "iddqd.social",
+    "bearer_token": "<REDACTED>",
+    "status": "<b><i>$TITLE</i></b>\n\n$URL",
+    "last_time": 1617887567
+  },
+  {
+    "url": "https://blog.soykaf.com/index.xml",
+    "instance": "letsalllovela.in",
+    "bearer_token": "<REDACTED>",
+    "status": "<b><i>$TITLE</i></b>\n\n$URL",
+    "last_time": 1590665103
+  },
+  {
+    "url": "https://iddqd.press/feed.xml",
+    "instance": "iddqd.social",
+    "status": "<b><i>$TITLE</i></b>\n\n$URL",
+    "bearer_token": "<REDACTED>",
+    "last_time": 1617398460
+  },
+  {
+    "url": "https://littlewars.home.blog/feed",
+    "instance": "iddqd.social",
+    "status": "<b><i>$TITLE</i></b>\n\n$DESC",
+    "bearer_token": "<REDACTED>",
+    "last_time": 1617327992
+  }
+]
