@@ -6,7 +6,7 @@ require 'syndesmos'
 require 'time'
 
 class PleRSSoma
-  attr_accessor :feeds, :fn, :pub_times, :multiplier
+  attr_accessor :feeds, :fn, :multiplier
 
   def initialize(fn)
     @fn = fn
@@ -15,38 +15,31 @@ class PleRSSoma
   end
 
   def start
-    while true
-      @pub_times = []
-      feeds.length.times { |i| run_feed(i) }
+    feeds.length.times { |i| run_feed(i) }
 
-      f = File.open(fn, "w")
-      f.write(JSON.pretty_generate(feeds))
-      f.close
-
-      pub_times.sort!
-
-      distances = pub_times.each_with_index.collect { |time,idx| pub_times[idx+1].nil? ? Float::INFINITY : pub_times[idx+1] - pub_times[idx] }
-      wait_time = [60, pub_times.length > 1 ? distances.min : 3600].max
-      wait_time *= multiplier
-      puts "Waiting until #{Time.at(Time.now.to_i + wait_time).strftime("%I:%M %p").yellow} (#{wait_time.yellow}s)"
-      sleep wait_time
-
-      @multiplier += 0.25
-    end
+    f = File.open(fn, "w")
+    f.write(JSON.pretty_generate(feeds))
+    f.close
   end
 
   private
 
   def run_feed(i)
     begin
-      puts "Attempting to read #{feeds[i]['url'].cyan}..."
+      puts "Considering #{feeds[i]['url'].cyan}..."
+
+      if !feeds[i]['next_time'].nil? and feeds[i]['next_time'] > Time.now.to_i
+        puts "\tToo early to check again; will check again at #{Time.at(feeds[i]['next_time']).yellow}"
+        return
+      end
 
       feed = Feedjira.parse(URI.open(feeds[i]['url']).read)
       puts "\tIdentified feed title as #{feed.title.cyan}"
 
       feeds[i]['last_time'].nil? ? new_feed(i, feed) : extant_feed(i, feed)
-
-      @pub_times += feed.entries.collect { |entry| entry.published.to_i }
+      
+      pub_times = feed.entries.collect { |entry| entry.published.to_i }
+      feeds[i]['next_time'] = Time.now.to_i + ((pub_times.max - pub_times.min) / pub_times.length)
     rescue => e
       puts "Failed to acquire #{feeds[i]['url'].cyan} with error type #{e.class.red} because #{e.message.red}"
     end
