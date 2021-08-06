@@ -5,6 +5,26 @@ require 'json'
 require 'syndesmos'
 require 'time'
 
+class Array
+  def diffs
+    ret = []
+    (self.length - 1).times do |i|
+      ret.push(self[i+1] - self[i])
+    end
+
+    ret
+  end
+
+  def with_weights
+    ret = []
+    self.length.times do |i|
+      ret.push [self[i], yield(self[i], i)]
+    end
+
+    ret
+  end
+end
+
 class PleRSSoma
   attr_accessor :feeds, :fn, :multiplier
 
@@ -39,7 +59,9 @@ class PleRSSoma
       feeds[i]['last_time'].nil? ? new_feed(i, feed) : extant_feed(i, feed)
       
       pub_times = feed.entries.collect { |entry| entry.published.to_i }
-      feeds[i]['next_time'] = Time.now.to_i + ((pub_times.max - pub_times.min) / pub_times.length)
+      weighted = pub_times.sort.diffs.with_weights { |val, idx| 1.0 / (2**(pub_times.length - idx)) }
+      weights = weighted.collect { |w| w[1] }.sum.to_f
+      feeds[i]['next_time'] = Time.now.to_i + (weighted.collect { |w| w[0] * w[1] }.sum / weights).to_i
     rescue => e
       puts "Failed to acquire #{feeds[i]['url'].cyan} with error type #{e.class.red} because #{e.message.red}"
     end
