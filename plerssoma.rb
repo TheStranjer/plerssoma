@@ -75,6 +75,8 @@ class PleRSSoma
     puts "\tThe most recent entry is #{entry.title.cyan}, published at #{entry.published.yellow}."
 
     feeds[i]['last_time'] = entry.published.to_i
+
+    new_item(i, feed, entry)
   end
 
   def extant_feed(i, feed)
