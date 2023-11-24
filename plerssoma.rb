@@ -61,7 +61,7 @@ class PleRSSoma
       pub_times = feed.entries.collect { |entry| entry.published.to_i }
       weighted = pub_times.sort.diffs.with_weights { |val, idx| 1.0 / (2**(pub_times.length - idx)) }
       weights = weighted.collect { |w| w[1] }.sum.to_f
-      feeds[i]['next_time'] = Time.now.to_i + (weighted.collect { |w| w[0] * w[1] }.sum / weights).to_i
+      feeds[i]['next_time'] = Time.now.to_i + [(weighted.collect { |w| w[0] * w[1] }.sum / weights).to_i, 86_400].min
     rescue => e
       puts "Failed to acquire #{feeds[i]['url'].cyan} with error type #{e.class.red} because #{e.message.red}"
     end
